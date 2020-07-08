@@ -7,6 +7,7 @@ services:
     restart: on-failure:5
     command:
       - --entrypoints.web.address=:80
+      - --entrypoints.web.address=:443
       - --providers.docker=true
       - --api.dashboard=true
     networks:
@@ -19,7 +20,7 @@ services:
       # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock:ro
     labels:
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.dev`)"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik-a.tk`)"
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.middlewares=auth"
       - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
