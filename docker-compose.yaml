@@ -1,30 +1,55 @@
 version: '3'
-
+  
 services:
   reverse-proxy:
-    # The official v2.0 Traefik docker image
+    # The official v2.2 Traefik docker image
     image: traefik:v2.0
     restart: on-failure:5
     command:
-      - --entrypoints.web.address=:80
-      - --entrypoints.web.address=:443
+      - --entryPoints.web.address=:80
+      - --entryPoints.websecure.address=:443
+      - --api=true
+      - --log.level=INFO # (Default: error) DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+      - --accessLog=true
+      - --accessLog.filePath=/traefik.log
       - --providers.docker=true
       - --api.dashboard=true
-    networks:
-      - traefik
+      - --api.insecure=false
+      - --api.debug=true
+      - --certificatesresolvers.predicta_resolver.acme.tlschallenge=true
+      - --certificatesresolvers.predicta_resolver.acme.dnschallenge=true
+      - --certificatesresolvers.predicta_resolver.acme.dnschallenge.provider=cloudflare
+      - --certificatesresolvers.predicta_resolver.acme.email=${CF_API_EMAIL}
+      - --certificatesresolvers.predicta_resolver.acme.storage=/letsencrypt/predicta.json
+    environment:
+      - CF_API_EMAIL=${CF_API_EMAIL}
+      - CF_API_KEY=${CF_API_KEY}
     ports:
       # The HTTP port
       - "80:80"
       - "443:443"
     volumes:
-      # So that Traefik can listen to the Docker events
+      - ./letsencrypt:/letsencrypt
+      - ./traefik.log:/traefik.log
       - /var/run/docker.sock:/var/run/docker.sock:ro
     labels:
+      - "traefik.enable=true"
       - "traefik.http.routers.dashboard.rule=Host(`traefik-a.tk`)"
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.middlewares=auth"
-      - "traefik.http.middlewares.auth.basicauth.users=test:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,test2:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+      - "traefik.http.middlewares.auth.basicauth.users=predicta:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,predicta-admin:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+
+  whoami:
+    image: "containous/whoami"
+    container_name: "simple-service"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`predicta-lts.tk`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.tls.certresolver=predicta_resolver"
 
 networks:
-  traefik:
-    external: true
+  default:
+    external:
+      name: traefik
+
