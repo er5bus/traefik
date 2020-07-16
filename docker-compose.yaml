@@ -44,17 +44,17 @@ services:
       
       - "traefik.http.routers.dashboard.tls=true"
       
-      - "traefik.http.routers.dashboard.rule=Host(`traefik-a.tk`)"
+      - "traefik.http.routers.dashboard.rule=Host(${DASHBOARD_DOMAIN})"
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.middlewares=auth"
-      - "traefik.http.middlewares.auth.basicauth.users=predicta:$$apr1$$H6uskkkW$$IgXLP6ewTrSuBkTrqE8wj/,predicta-admin:$$apr1$$d9hr9HBB$$4HxwgUir3HP4EsggP/QNo0"
+      - "traefik.http.middlewares.auth.basicauth.users=${USER_NAME}:${USER_PASSWORD}"
 
   whoami:
     image: "containous/whoami"
     container_name: "simple-service"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.whoami.rule=Host(`predicta-lts.tk`)"
+      - "traefik.http.routers.whoami.rule=Host(`traefik.example.com`)"
       - "traefik.http.routers.whoami.entrypoints=websecure"
       - "traefik.http.routers.whoami.tls.certresolver=predicta_resolver"
 
